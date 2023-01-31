@@ -1,0 +1,9 @@
+quarkus:
+  datasource:
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    jdbc:
+      url: ${DB_URL}
+  db-kind: postgresql
+  http:
+    port: 9099

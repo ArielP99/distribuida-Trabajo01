@@ -1,0 +1,78 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'io.quarkus' version '2.16.0.Final'
+    id "io.freefair.lombok" version "6.6.1"
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    quarkusversion = '2.16.0.Final'
+}
+
+dependencies {
+    implementation enforcedPlatform("io.quarkus.platform:quarkus-bom:${project.quarkusversion}")
+    implementation group:'io.quarkus', name: 'quarkus-resteasy'
+    implementation 'io.quarkus:quarkus-jdbc-postgresql'
+    implementation group: 'io.quarkus', name: 'quarkus-hibernate-orm-panache', version: '2.16.0.Final'
+    implementation group: 'io.quarkus', name: 'quarkus-consul-config', version: '2.7.1.Final'
+    implementation 'com.orbitz.consul:consul-client:1.5.3'
+    implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
+    implementation group: 'io.quarkus', name: 'quarkus-smallrye-health'
+
+    //base de datos
+    implementation 'org.postgresql:postgresql:42.5.1'
+    implementation 'org.jboss.resteasy:resteasy-jackson2-provider:4.7.4.Final'
+
+    //panache data
+    annotationProcessor("io.quarkus:quarkus-panache-common")
+    implementation("io.quarkus:quarkus-config-yaml")
+
+}
+
+group 'com.distribuida'
+version '1.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+String myClass= "com.distribuida.Servidor"
+
+sourceSets{
+    main{
+        output.resourcesDir = file("${buildDir}/classes/java/main")
+    }
+}
+
+task copyLibs(type: Copy) {
+    from configurations.runtimeClasspath
+    into 'build/libs/libs'
+}
+
+copyLibs.dependsOn jar
+assemble.dependsOn copyLibs
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveFileName = "${project.name}.jar"
+    manifest {
+        attributes(
+                'Main-Class': "${myClass}",
+                'Class-Path': configurations.runtimeClasspath.files.collect { "libs/$it.name" }.join(' ')
+        )
+    }
+}
+
+task copyBeansXML {
+    doLast {
+        ant.copy file: "${projectDir}/src/main/resources/META-INF/beans.xml",
+                todir: "${buildDir}/classes/java/main/META-INF"
+    }
+}
+
+classes.dependsOn copyBeansXML
